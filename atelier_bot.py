@@ -1,7 +1,6 @@
 # import asyncio
 import json
 import logging
-import os
 import requests
 import sys
 from telegram import (
@@ -17,20 +16,18 @@ from telegram.ext import (
     filters,
 )
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-
 CREATE_CLAIM_URL = 'http://127.0.0.1:8000/api/create_claim'
 RECIEVE_MANAGERS_URL = 'http://127.0.0.1:8000/api/managers/'
+RECIEVE_BOT_TOKEN_URL = 'http://127.0.0.1:8000/api/bot/'
 
 PHONE_NUMBER_ASK_TXT = (
-    'Пожалуйста, введите номер телефона в формете +79993331122:')
-REQUEST_MESSAGE_TXT = ('Новая заявка.\n Номер: +{0}')
+
+    'Пожалуйста, введите номер телефона в формете +79993331122:'
+)
+REQUEST_MESSAGE_TXT = 'Новая заявка.\nНомер: {0}'
 REQUEST_BUTTON_TEXT = 'Оставить заявку'
-START_MESSAGE = 'Добро пожаловать!'
+START_MESSAGE = ('Нажмите кнопку оставить заявку и мы '
+                 'свяжемся с вами в ближайшее время.')
 
 
 def logging_config():
@@ -76,7 +73,7 @@ async def send_request(
     data = {
         'username': update.effective_user.username,
         'phone_number': phone_number,
-        'message': REQUEST_MESSAGE_TXT
+        'message': REQUEST_MESSAGE_TXT.format(phone_number)
     }
     response = requests.post(
         url=CREATE_CLAIM_URL,
@@ -89,8 +86,12 @@ async def send_request(
             if manager['to_telegram']:
                 await context.bot.send_message(
                     chat_id=manager['telegram_id'],
-                    text=REQUEST_MESSAGE_TXT.format(data['phone_number'])
+                    text=REQUEST_MESSAGE_TXT.format(phone_number)
                 )
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=('Заявка принята'),
+        )
 
 
 async def start_message(
@@ -105,16 +106,22 @@ async def start_message(
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text=(
-            "Нажмите кнопку оставить заявку и мы "
-            "свяжемся с вами в ближайшее время."),
+        text=START_MESSAGE,
         reply_markup=reply_markup
     )
 
 
+def recieve_bot_token():
+    """Получает токен бота для дальнейшей работы"""
+    response = requests.get(url=RECIEVE_BOT_TOKEN_URL)
+    for unit in response.json():
+        if unit['active'] is True:
+            return unit['token']
+
+
 if __name__ == '__main__':
     logging_config()
-
+    BOT_TOKEN = recieve_bot_token()
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     start_handler = CommandHandler('start', start_message)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from info.models import ServicePrice
+from info.models import ServicePrice, Bot
 from services.models import Claim, Telegram_manager
 
 
@@ -27,3 +27,10 @@ class ServicePriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServicePrice
         fields = '__all__'
+
+
+class BotSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = ('username', 'token', 'active')
+        model = Bot

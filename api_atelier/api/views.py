@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from api.serializers import (ClaimSerializer, ServicePriceSerializer,
-                             Telegram_managerSerializer)
-from info.models import ServicePrice
+                             Telegram_managerSerializer, BotSerializer)
+from info.models import ServicePrice, Bot
 from services.models import Claim, Telegram_manager
 
 
@@ -34,3 +34,8 @@ class ManagersListViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 class ServicePriceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ServicePrice.objects.all()
     serializer_class = ServicePriceSerializer
+
+
+class BotViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Bot.objects.all()
+    serializer_class = BotSerializer
